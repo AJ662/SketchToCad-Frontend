@@ -8,4 +8,5 @@ export interface BedData {
     x: number;
     y: number;
   };
+  mask?: number[][];
 }

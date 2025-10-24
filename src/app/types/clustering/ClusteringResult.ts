@@ -1,8 +1,7 @@
 import { ClusteringStatistics } from "./ClusteringStatistics";
-import { ClusterStats } from "./ClusterStats";
 
 export interface ClusteringResult {
-  clustered_image: string;
+  final_labels: number[];
+  processed_clusters: Record<string, number[]>;
   statistics: ClusteringStatistics;
-  cluster_details: ClusterStats[];
 }

@@ -11,6 +11,7 @@ interface ResultsDashboardProps {
   clusteringResult: ClusteringResult;
   processingResult: ProcessingResult;
   onReset: () => void;
+  onExport?: (exportType: 'summary' | 'detailed') => void;  // ADD THIS LINE
 }
 
 const CLUSTER_COLORS = [
@@ -34,13 +35,22 @@ export default function ResultsDashboard({
 
   const downloadDxf = async (exportType: 'detailed' | 'summary' = 'detailed') => {
     try {
-      // FIXED: Don't reconstruct cluster_dict - let backend use session data
-      console.log('🚀 Downloading DXF, letting backend use session data');
+      console.log('🚀 Downloading DXF with proper data structure');
       
-      const response = await axios.post('http://localhost:8000/export-dxf', {
-        session_id: processingResult.session_id,
-        export_type: exportType
-        // Removed broken cluster_dict reconstruction
+      // Filter out the 'position' field from bed_data as the backend does not expect it
+      const bedData = processingResult.bed_data.map(bed => {
+        const { position, ...rest } = bed; // Destructure to exclude position
+        return rest;
+      });
+      // Get the cluster_dict from clusteringResult.processed_clusters
+      const clusterDict = clusteringResult.processed_clusters;
+
+      console.log("bedData: ", bedData, "clusterDict: ", clusterDict, "exportType: ", exportType);
+      
+      const response = await axios.post('http://localhost:8003/export-dxf', {
+        bed_data: bedData,
+        cluster_dict: clusterDict,
+        export_type: exportType.toLocaleLowerCase()
       }, {
         responseType: 'blob'
       });
@@ -251,9 +261,9 @@ export default function ResultsDashboard({
       <div className="bg-white rounded-lg shadow-lg p-6">
         <h3 className="text-xl font-semibold mb-4">Cluster Details</h3>
         
-        {clusteringResult.cluster_details.length > 0 ? (
+        {clusteringResult.statistics.cluster_details.length > 0 ? (
           <div className="space-y-4">
-            {clusteringResult.cluster_details.map((cluster, index) => {
+            {clusteringResult.statistics.cluster_details.map((cluster, index) => {
               const colorScheme = CLUSTER_COLORS[index % CLUSTER_COLORS.length];
               const isSelected = selectedCluster === cluster.cluster_id;
               
