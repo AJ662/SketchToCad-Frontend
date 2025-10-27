@@ -1,17 +1,15 @@
-// /Users/arthurjaspar/Projects/SketchToCad/SketchToCad/frontend/src/app/components/ResultsDashboard.tsx
-
 "use client";
 
 import { useState } from 'react';
 import { ClusteringResult } from '../types/clustering/ClusteringResult';
 import { ProcessingResult } from '../types/processing/ProcessingResult';
-import axios from 'axios';
+import API_CONFIG from '@/config/api.config';
 
 interface ResultsDashboardProps {
   clusteringResult: ClusteringResult;
   processingResult: ProcessingResult;
   onReset: () => void;
-  onExport?: (exportType: 'summary' | 'detailed') => void;  // ADD THIS LINE
+  onExport?: (exportType: 'summary' | 'detailed') => void;
 }
 
 const CLUSTER_COLORS = [
@@ -37,10 +35,7 @@ export default function ResultsDashboard({
     try {
       console.log('🚀 Downloading DXF with session-based approach');
       
-      // Get the cluster_dict from clusteringResult.processed_clusters
       const clusterDict = clusteringResult.processed_clusters;
-      
-      // Get session_id from processingResult (already in the type!)
       const sessionId = processingResult.session_id;
 
       console.log("Using session_id:", sessionId, "clusterDict:", clusterDict, "exportType:", exportType);
@@ -49,13 +44,15 @@ export default function ResultsDashboard({
         throw new Error('No session_id available. Cannot fetch masks from Redis.');
       }
       
-      const response = await fetch('http://localhost:8003/export-dxf', {
+      const dxfUrl = `${API_CONFIG.dxfExport.baseUrl}${API_CONFIG.dxfExport.endpoints.exportDxf}`;
+      
+      const response = await fetch(dxfUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          session_id: sessionId,  // DXF service will fetch masks from Redis
+          session_id: sessionId,
           cluster_dict: clusterDict,
-          export_type: exportType  // Use the actual exportType parameter
+          export_type: exportType
         })
       });
 
@@ -64,7 +61,6 @@ export default function ResultsDashboard({
         throw new Error(`DXF export failed: ${response.status} - ${errorText}`);
       }
 
-      // Get the blob directly from the response
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');

@@ -1,7 +1,8 @@
-// API Configuration for SketchToCad Microservices
+const GATEWAY_URL = process.env.NEXT_PUBLIC_GATEWAY_URL || 'http://localhost:8000';
+
 export const API_CONFIG = {
   imageProcessing: {
-    baseUrl: process.env.NEXT_PUBLIC_IMAGE_PROCESSING_URL || 'http://localhost:8001',
+    baseUrl: `${GATEWAY_URL}/api/v1/image-processing`,
     endpoints: {
       processImage: '/process-image',
       getSession: '/session',
@@ -10,7 +11,7 @@ export const API_CONFIG = {
     }
   },
   clustering: {
-    baseUrl: process.env.NEXT_PUBLIC_CLUSTERING_URL || 'http://localhost:8002',
+    baseUrl: `${GATEWAY_URL}/api/v1/clustering`,
     endpoints: {
       createEnhancedColors: '/create-enhanced-colors',
       processClustering: '/process-clustering',
@@ -18,7 +19,7 @@ export const API_CONFIG = {
     }
   },
   dxfExport: {
-    baseUrl: process.env.NEXT_PUBLIC_DXF_EXPORT_URL || 'http://localhost:8003',
+    baseUrl: `${GATEWAY_URL}/api/v1/dxf-export`,
     endpoints: {
       exportDxf: '/export-dxf',
       validateExport: '/validate-export',
