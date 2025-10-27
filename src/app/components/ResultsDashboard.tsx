@@ -35,27 +35,37 @@ export default function ResultsDashboard({
 
   const downloadDxf = async (exportType: 'detailed' | 'summary' = 'detailed') => {
     try {
-      console.log('🚀 Downloading DXF with proper data structure');
+      console.log('🚀 Downloading DXF with session-based approach');
       
-      // Filter out the 'position' field from bed_data as the backend does not expect it
-      const bedData = processingResult.bed_data.map(bed => {
-        const { position, ...rest } = bed; // Destructure to exclude position
-        return rest;
-      });
       // Get the cluster_dict from clusteringResult.processed_clusters
       const clusterDict = clusteringResult.processed_clusters;
-
-      console.log("bedData: ", bedData, "clusterDict: ", clusterDict, "exportType: ", exportType);
       
-      const response = await axios.post('http://localhost:8003/export-dxf', {
-        bed_data: bedData,
-        cluster_dict: clusterDict,
-        export_type: exportType.toLocaleLowerCase()
-      }, {
-        responseType: 'blob'
+      // Get session_id from processingResult (already in the type!)
+      const sessionId = processingResult.session_id;
+
+      console.log("Using session_id:", sessionId, "clusterDict:", clusterDict, "exportType:", exportType);
+      
+      if (!sessionId) {
+        throw new Error('No session_id available. Cannot fetch masks from Redis.');
+      }
+      
+      const response = await fetch('http://localhost:8003/export-dxf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          session_id: sessionId,  // DXF service will fetch masks from Redis
+          cluster_dict: clusterDict,
+          export_type: exportType  // Use the actual exportType parameter
+        })
       });
 
-      const blob = new Blob([response.data], { type: 'application/dxf' });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`DXF export failed: ${response.status} - ${errorText}`);
+      }
+
+      // Get the blob directly from the response
+      const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -64,9 +74,11 @@ export default function ResultsDashboard({
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+      
+      console.log('✅ DXF file downloaded successfully');
     } catch (error) {
-      console.error('DXF export failed:', error);
-      alert('Failed to export DXF file. Please try again.');
+      console.error('❌ DXF export failed:', error);
+      alert(`Failed to export DXF file: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 

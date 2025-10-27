@@ -99,7 +99,7 @@ class ApiService {
       headers: { 
         'Content-Type': 'application/json'
       },
-      timeout: 30000 // 30 second timeout
+      timeout: 1200000 // 30 second timeout
     });
 
     this.clusteringApi = axios.create({
@@ -115,7 +115,7 @@ class ApiService {
       headers: { 
         'Content-Type': 'application/json'
       },
-      timeout: 60000 // 60 seconds for file export
+      timeout: 1200000 // 60 seconds for file export
     });
 
     // Add response interceptors for error handling
